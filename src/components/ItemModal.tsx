@@ -30,7 +30,7 @@ export default function ItemModal({ onSubmit, onClose }: ItemModalProps) {
   ]);
 
   return (
-    <div className="absolute w-full top-[150px]">
+    <div className="absolute w-full top-[150px] z-10">
       <div className="flex w-full justify-center">
         <div className="bg-white border-2 border-black p-5">
           <div className="flex flex-row-reverse w-full">

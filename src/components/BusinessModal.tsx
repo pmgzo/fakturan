@@ -32,7 +32,7 @@ export default function BusinessModal({
     },
   });
   return (
-    <div className="absolute w-full top-10">
+    <div className="absolute w-full top-10 z-10">
       <div className="flex w-full justify-center">
         <div className="bg-white border-2 border-black p-5">
           <div className="flex flex-row-reverse w-full">
