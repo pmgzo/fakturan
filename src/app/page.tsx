@@ -5,7 +5,10 @@ import { useState } from "react";
 import ClientModal, { ClientModalInput } from "@/components/ClientModal";
 import ModalButton from "@/components/ModalButton";
 import BusinessModal, { BusinessModalInput } from "@/components/BusinessModal";
+import GridItems, { InvoiceItem } from "@/components/GridItems";
+import ItemModal from "@/components/ItemModal";
 
+// TODO: move
 function createPdf() {
   const doc = new jsPDF();
 
@@ -16,15 +19,21 @@ function createPdf() {
     printHeaders: true,
   };
 
-  // doc.setTableHeaderRow([{name: "test1", prompt: "test", align: "center", padding: 10, width: 100}]);
-  doc.table(10, 20, [{ Test1: "test" }], ["Test1"], config);
-  doc.save("a4.pdf");
+  // doc.table(10, 20, [{ Test1: "test" }], ["Test1"], config);
+  // doc.save("a4.pdf");
 }
 
 enum ModalState {
   CLOSED,
   CLIENT,
   BUSINESS,
+  ITEM,
+}
+
+interface TotalsState {
+  subtotal: number
+  vatTotal: number
+  total: number;
 }
 
 export default function Home() {
@@ -35,6 +44,9 @@ export default function Home() {
   const [businessInfos, setBusinessInfos] = useState<
     BusinessModalInput | undefined
   >(undefined);
+
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [totals, setTotals] = useState<TotalsState>({subtotal: 0, vatTotal: 0, total: 0});
 
   function closeModal() {
     setOpenedModal(ModalState.CLOSED);
@@ -60,12 +72,38 @@ export default function Home() {
             setBusinessInfos({ ...data });
             closeModal();
           }}
-          onClose={() => setOpenedModal(ModalState.CLOSED)}
+          onClose={closeModal}
         />
       )}
+      {openedModal === ModalState.ITEM && (
+        <ItemModal
+          onSubmit={({ description, quantity, unitPrice, vatRate }) => {
+            //TODO: update item array
+            const newArray = items;
+            newArray.push({
+              description,
+              quantity,
+              unitPrice: unitPrice,
+              amountPrice: quantity * unitPrice,
+              vatRate,
+              vatNet: (quantity * unitPrice * vatRate) / 100,
+            });
+            setItems(newArray);
+
+            const subtotal = newArray.reduce((total, {amountPrice}) => (total + amountPrice), 0)
+            const vatTotal = newArray.reduce((total, {vatNet}) => (total + vatNet), 0)
+
+            setTotals({subtotal, vatTotal, total: subtotal + vatTotal})
+
+            closeModal();
+          }}
+          onClose={closeModal}
+        />
+      )}
+
       <div className="flex justify-center">
         <div className="flex flex-col">
-          <div>
+          <div className="mt-[10px] flex justify-evenly">
             <ModalButton
               infosCompleted={!!businessInfos}
               onClick={() => setOpenedModal(ModalState.BUSINESS)}
@@ -79,10 +117,48 @@ export default function Home() {
               Fill in your client's infos
             </ModalButton>
           </div>
-          {/* Here should be the table with services and products */}
-          <button className="bg-red-600" onClick={createPdf}>
-            Dowload Invoice
-          </button>
+          <div className="absolute left-[100px] top-[125px]">
+            <div className="grid grid-flow-row gap-[20px]">
+
+            <button
+              className="bg-[#7cacf8]"
+              onClick={() => setOpenedModal(ModalState.ITEM)}
+            >
+              Add row
+            </button>
+
+            <button className="bg-red-200" onClick={createPdf}>
+              Dowload Invoice
+            </button>
+
+            </div>
+          </div>
+          <div className="mt-[50px]">
+            <GridItems data={items} />
+          </div>
+          <div className="absolute right-[100px] top-[100px]">
+            <div className="grid grid-flow-row">
+              <div>
+                <label>
+                  Subtotal: 
+                </label>
+              {totals.subtotal}
+              </div>
+              <div>
+                <label>
+                  Vat Total: 
+                </label>
+              {totals.vatTotal}
+              </div>
+              <div>
+                <label>
+                  Total: 
+
+                </label>
+              {totals.total}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

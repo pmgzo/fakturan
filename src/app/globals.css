@@ -12,3 +12,9 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  .value-row {
+    @apply h-[60px] w-[150px] overflow-scroll border-2 border-black;
+  }
+}
