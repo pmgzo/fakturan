@@ -7,6 +7,8 @@ import ModalButton from "@/components/ModalButton";
 import BusinessModal, { BusinessModalInput } from "@/components/BusinessModal";
 import GridItems, { InvoiceItem } from "@/components/GridItems";
 import ItemModal from "@/components/ItemModal";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // TODO: move
 function createPdf() {
@@ -36,6 +38,12 @@ interface TotalsState {
   total: number;
 }
 
+interface DatesState {
+  taxPoint: Date
+  dueDate: Date
+}
+
+
 export default function Home() {
   const [openedModal, setOpenedModal] = useState<ModalState>(ModalState.CLOSED);
   const [clientInfos, setClientInfos] = useState<ClientModalInput | undefined>(
@@ -47,6 +55,7 @@ export default function Home() {
 
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [totals, setTotals] = useState<TotalsState>({subtotal: 0, vatTotal: 0, total: 0});
+  const [dates, setDates] = useState<DatesState>({taxPoint: new Date(), dueDate: new Date()});
 
   function closeModal() {
     setOpenedModal(ModalState.CLOSED);
@@ -126,6 +135,16 @@ export default function Home() {
             >
               Add row
             </button>
+
+            <div className="grid grid-flow-rows">
+              <label>Tax Point </label>
+              <DatePicker dateFormat="dd/MM/YYYY" selected={dates.taxPoint} onChange={(date) => setDates({...dates, taxPoint: date || new Date()})} />
+            </div>
+
+            <div className="grid grid-flow-rows">
+              <label>Due Date </label>
+              <DatePicker dateFormat="dd/MM/YYYY" selected={dates.dueDate} onChange={(date) => setDates({...dates, dueDate: date ? date : new Date()})} />
+            </div>
 
             <button className="bg-red-200" onClick={createPdf}>
               Dowload Invoice

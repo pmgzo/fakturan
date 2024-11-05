@@ -13,12 +13,14 @@
     "jspdf": "^2.5.2",
     "next": "15.0.1",
     "react": "^18",
+    "react-datepicker": "^7.5.0",
     "react-dom": "^18",
     "react-hook-form": "^7.53.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
+    "@types/react-datepicker": "^6.2.0",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "15.0.1",
