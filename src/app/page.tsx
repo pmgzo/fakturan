@@ -1,6 +1,5 @@
 "use client";
 
-import { jsPDF } from "jspdf";
 import { useState } from "react";
 import ClientModal, { ClientModalInput } from "@/components/ClientModal";
 import ModalButton from "@/components/ModalButton";
@@ -9,21 +8,8 @@ import GridItems, { InvoiceItem } from "@/components/GridItems";
 import ItemModal from "@/components/ItemModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-// TODO: move
-function createPdf() {
-  const doc = new jsPDF();
-
-  // doc.text("Hello world!", 10, 10);
-
-  let config = {
-    autoSize: true,
-    printHeaders: true,
-  };
-
-  // doc.table(10, 20, [{ Test1: "test" }], ["Test1"], config);
-  // doc.save("a4.pdf");
-}
+import { DatesState, TotalsState } from "./types";
+import generatePdf from "./generatePdf";
 
 enum ModalState {
   CLOSED,
@@ -31,18 +17,6 @@ enum ModalState {
   BUSINESS,
   ITEM,
 }
-
-interface TotalsState {
-  subtotal: number
-  vatTotal: number
-  total: number;
-}
-
-interface DatesState {
-  taxPoint: Date
-  dueDate: Date
-}
-
 
 export default function Home() {
   const [openedModal, setOpenedModal] = useState<ModalState>(ModalState.CLOSED);
@@ -54,8 +28,15 @@ export default function Home() {
   >(undefined);
 
   const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [totals, setTotals] = useState<TotalsState>({subtotal: 0, vatTotal: 0, total: 0});
-  const [dates, setDates] = useState<DatesState>({taxPoint: new Date(), dueDate: new Date()});
+  const [totals, setTotals] = useState<TotalsState>({
+    subtotal: 0,
+    vatTotal: 0,
+    total: 0,
+  });
+  const [dates, setDates] = useState<DatesState>({
+    taxPoint: new Date(),
+    dueDate: new Date(),
+  });
 
   function closeModal() {
     setOpenedModal(ModalState.CLOSED);
@@ -82,6 +63,7 @@ export default function Home() {
             closeModal();
           }}
           onClose={closeModal}
+          defaultValue={businessInfos}
         />
       )}
       {openedModal === ModalState.ITEM && (
@@ -99,10 +81,16 @@ export default function Home() {
             });
             setItems(newArray);
 
-            const subtotal = newArray.reduce((total, {amountPrice}) => (total + amountPrice), 0)
-            const vatTotal = newArray.reduce((total, {vatNet}) => (total + vatNet), 0)
+            const subtotal = newArray.reduce(
+              (total, { amountPrice }) => total + amountPrice,
+              0,
+            );
+            const vatTotal = newArray.reduce(
+              (total, { vatNet }) => total + vatNet,
+              0,
+            );
 
-            setTotals({subtotal, vatTotal, total: subtotal + vatTotal})
+            setTotals({ subtotal, vatTotal, total: subtotal + vatTotal });
 
             closeModal();
           }}
@@ -128,28 +116,51 @@ export default function Home() {
           </div>
           <div className="absolute left-[100px] top-[125px]">
             <div className="grid grid-flow-row gap-[20px]">
+              <button
+                className="bg-[#7cacf8]"
+                onClick={() => setOpenedModal(ModalState.ITEM)}
+              >
+                Add row
+              </button>
 
-            <button
-              className="bg-[#7cacf8]"
-              onClick={() => setOpenedModal(ModalState.ITEM)}
-            >
-              Add row
-            </button>
+              <div className="grid grid-flow-rows">
+                <label>Tax Point </label>
+                <DatePicker
+                  dateFormat="dd/MM/YYYY"
+                  selected={dates.taxPoint}
+                  onChange={(date) =>
+                    setDates({ ...dates, taxPoint: date || new Date() })
+                  }
+                />
+              </div>
 
-            <div className="grid grid-flow-rows">
-              <label>Tax Point </label>
-              <DatePicker dateFormat="dd/MM/YYYY" selected={dates.taxPoint} onChange={(date) => setDates({...dates, taxPoint: date || new Date()})} />
-            </div>
+              <div className="grid grid-flow-rows">
+                <label>Due Date </label>
+                <DatePicker
+                  dateFormat="dd/MM/YYYY"
+                  selected={dates.dueDate}
+                  onChange={(date) =>
+                    setDates({ ...dates, dueDate: date ? date : new Date() })
+                  }
+                />
+              </div>
 
-            <div className="grid grid-flow-rows">
-              <label>Due Date </label>
-              <DatePicker dateFormat="dd/MM/YYYY" selected={dates.dueDate} onChange={(date) => setDates({...dates, dueDate: date ? date : new Date()})} />
-            </div>
-
-            <button className="bg-red-200" onClick={createPdf}>
-              Dowload Invoice
-            </button>
-
+              <button
+                className="bg-red-200"
+                disabled={!businessInfos || !clientInfos || !items.length}
+                onClick={() => {
+                  generatePdf({
+                    businessInfos,
+                    clientInfos,
+                    invoiceNumber: "000145",
+                    dates,
+                    totals,
+                    items,
+                  });
+                }}
+              >
+                Dowload Invoice
+              </button>
             </div>
           </div>
           <div className="mt-[50px]">
@@ -158,23 +169,16 @@ export default function Home() {
           <div className="absolute right-[100px] top-[100px]">
             <div className="grid grid-flow-row">
               <div>
-                <label>
-                  Subtotal: 
-                </label>
-              {totals.subtotal}
+                <label>Subtotal:</label>
+                {totals.subtotal}
               </div>
               <div>
-                <label>
-                  Vat Total: 
-                </label>
-              {totals.vatTotal}
+                <label>Vat Total:</label>
+                {totals.vatTotal}
               </div>
               <div>
-                <label>
-                  Total: 
-
-                </label>
-              {totals.total}
+                <label>Total:</label>
+                {totals.total}
               </div>
             </div>
           </div>
